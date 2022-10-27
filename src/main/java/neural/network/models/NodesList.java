@@ -3,8 +3,9 @@ package neural.network.models;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
- * .
+ * Datastructure for saving weights.
  *
  * <p>Created by: Jack</p>
  * <p>Date: 27.10.2022</p>

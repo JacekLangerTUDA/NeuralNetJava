@@ -4,7 +4,6 @@ package neural.network.reader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import neural.network.reader.enumerations.MnistFile;
 
 /**
@@ -39,51 +38,6 @@ public class MnistReader extends MnistReaderBase {
     return readLabel(index, MnistFile.CONTROL_LABEL);
   }
 
-  /**
-   * Fetch weights.json for the corresponding Layer. this function will create an array of random
-   * weights.json if there are no weights.json present.
-   *
-   * @param layerIndex index of the Layer being processed
-   * @param inputs     the size of the Layer
-   * @return weights.json for the Layer.
-   */
-  public double[][] fetchWeights(int layerIndex, int inputs, int outputs) {
-
-    String weightsString = null;
-    Path weightsFile = MnistFile.WEIGTHS.getPath();
-    try {
-      File file = weightsFile.toFile();
-      if (weightsFile.toFile().exists()) {
-        weightsString = Files.readString(weightsFile).split("\n")[layerIndex];
-        if (isEmptyString(weightsString)) {
-          weightsString = createWeightsData(file, inputs, outputs);
-        }
-      } else {
-        file.createNewFile();
-        weightsString = createWeightsData(file, inputs, outputs);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } catch (ArrayIndexOutOfBoundsException e) {
-      try {
-        weightsString = createWeightsData(weightsFile.toFile(), inputs, outputs);
-      } catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-
-    var nums = weightsString.split(",");
-
-    double[][] weights = new double[inputs][outputs];
-    for (int w = 0; w < inputs; w++) {
-      for (int h = 0; h < outputs; h++) {
-        weights[h][w] = Double.valueOf(nums[h + h]);
-      }
-    }
-
-    return weights;
-  }
-
   private boolean isEmptyString(String str) {
 
     return "".equals(str);
@@ -106,5 +60,6 @@ public class MnistReader extends MnistReaderBase {
 
     return sb.toString();
   }
+
 
 }

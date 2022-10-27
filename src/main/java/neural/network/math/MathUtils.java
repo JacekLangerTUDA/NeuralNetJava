@@ -3,6 +3,7 @@ package neural.network.math;
 import static java.lang.Math.E;
 import static java.lang.Math.pow;
 
+import kotlin.NotImplementedError;
 import neural.network.math.exception.IllegalMathOperationException;
 
 /**
@@ -100,6 +101,35 @@ public class MathUtils {
     return temp;
   }
 
+
+  public static double scalar(double[] fst, double[] sec) {
+
+    double val = 0;
+
+    for (int i = 0; i < fst.length; i++) {
+      val += fst[i] * sec[i];
+    }
+
+    return val;
+  }
+
+  /**
+   * Multiplies 2 matrices of which the first is of Nx1 and the second Of NxM the result is a new
+   * matrix of NxM.
+   *
+   * @param weights the weights matrix
+   * @param input   the input matrix
+   * @return new input layer
+   */
+  public static double[][] mMult(final double[] input, final double[][] weights) {
+
+//    double[][] temp = new double[weights.length][weights[0].length];
+
+    throw new NotImplementedError();
+
+//    return temp;
+  }
+
   /**
    * Multiplies a vector with a given alpha
    *
@@ -112,6 +142,24 @@ public class MathUtils {
     var temp = new double[arr.length];
     for (int i = 0; i < arr.length; i++) {
       temp[i] = arr[i] * alpha;
+    }
+    return temp;
+  }
+
+  /**
+   * Transponse of a matrix.
+   *
+   * @param matrix matrix to transponse
+   * @return a transponse of the original matrix m<pow>T</pow>
+   */
+  public static double[][] trans(double[][] matrix) {
+
+    double[][] temp = new double[matrix[0].length][matrix.length];
+
+    for (int i = 0; i < matrix.length; i++) {
+      for (int j = 0; j < matrix[i].length; j++) {
+        temp[j][i] = matrix[i][j];
+      }
     }
     return temp;
   }

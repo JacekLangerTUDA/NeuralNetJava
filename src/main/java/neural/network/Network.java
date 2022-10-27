@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import neural.network.math.MathUtils;
 import neural.network.models.Layer;
 import neural.network.models.NodesList;
@@ -23,37 +25,91 @@ public class Network extends NeuralLogging {
 
   public static final int INPUT_NODES = 784;
 
-  private static final Path WEIGHTS_PATH = Path.of("src/main/resources/weights.json");
-  public static List<double[][]> WEIGHTS = new ArrayList<>();
+  public static final double CORRECTION_RATE = .1;
 
-  private static double CORRECTION_RATE = .03;
+  private static final Path WEIGHTS_PATH = Path.of("src/main/resources/weights.json");
+  /**
+   * unsigmoided layer values.
+   */
+  private static final List<double[]> LAYERS = new ArrayList<>();
+  public static List<double[][]> WEIGHTS = new ArrayList<>();
 
   public static void main(String[] args) {
 
-    train(Integer.MAX_VALUE);
+    train(1);
+    MnistReader reader = new MnistReader();
+    assess(reader.readControlImage(78), reader.readControlLabel(78));
   }
 
-  private static void train(int generations) {
+  public static void assess(double[] img, int expected) {
+
+    fetchWeightsFromJson();
+    double[] out = processLayers(img);
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("-----------------------")
+      .append("\n\tExpected: ").append(expected).append("\n\n");
+    for (int i = 0; i < 10; i++) {
+      sb.append("\t\t").append(i).append(":\t").append(out[i]).append("\n");
+    }
+    sb
+        .append("-----------------------");
+
+    info(sb.toString());
+  }
+
+  public static void train(int generations) {
 
     double[] pixelArray = null;
     short label = 0;
-    int generation = 0;
     MnistReader reader = new MnistReader();
     fetchWeightsFromJson();
-    while (generation++ < 2) {
-      var rand = (int) (Math.random() * 100);
-      pixelArray = reader.readTrainImage(rand);
-      label = reader.readTrainLabel(rand);
-      double[] out = processLayers(pixelArray);
-      double[] errors = MathUtils.mult(CORRECTION_RATE, getErrorFromOutput(out, label));
-      correctWeights(errors);
+
+    for (int g = 0; g < generations; g++) {
+
+      for (int n = 0; n < 100; n++) {
+        var rand = (int) (Math.random() * 100);
+        pixelArray = reader.readTrainImage(rand);
+        label = reader.readTrainLabel(rand);
+        double[] out = processLayers(pixelArray);
+        double[] errors = getErrorFromOutput(out, label);
+        int layers = WEIGHTS.size() - 1;
+        for (int i = layers; i >= 0; i--) {
+          errors = backpropagation(errors, i);
+        }
+      }
     }
+
     updateWeightsFile();
   }
 
-  private static void correctWeights(double[] errors) {
+  /**
+   * Calculate all the errors of the hidden layers and correct the weights accordingly.
+   *
+   * @param errors errors from last layer
+   * @param i      the index of the current layer
+   * @return
+   */
+  private static double[] backpropagation(double[] errors, int i) {
 
+// TODO: 27.10.2022 needs fixing
+    final double[][] weights = (WEIGHTS.get(i));
+    final double[] layer = LAYERS.get(i);
+    double[] errorTemp = new double[layer.length];
+    for (int k = 0; k < errors.length; k++) {
+      int length = weights[k].length;
+      for (int j = 0; j < length; j++) {
 
+        double oj = layer[j];
+        double sig = MathUtils.sigmoid(MathUtils.scalar(weights[k], layer));
+        double err = -1 * errors[k] * sig * (1 - sig) * oj;
+
+        errorTemp[j] = err;
+
+        WEIGHTS.get(i)[k][j] += err; //* CORRECTION_RATE;
+      }
+    }
+    return errorTemp;
   }
 
   private static double[] processLayers(double[] nodes) {
@@ -66,18 +122,22 @@ public class Network extends NeuralLogging {
     double[] tempLayer = nodes;
     int layerSize = INPUT_NODES;    // 784 nodes
     double[][] iW = getWeightsForLayer(i, layerSize);   // initial matrix 392x784
-
+    LAYERS.add(nodes);
     while (layerSize >> 1 > 10) {
       // half the size of the layer,
       // but make sure we have at least 10  nodes
       layerSize = Math.max((layerSize >> 1), 10);
+      // use sigmoid function on value.
+
+      ExecutorService executorService = Executors.newCachedThreadPool();
 
       tempLayer = MathUtils.sigmoid(MathUtils.mMult(iW, tempLayer));
-
+      LAYERS.add(tempLayer);
+      // get next layers weights
       iW = getWeightsForLayer(++i, layerSize);    // get the next layer weights
     }
-    iW = getWeightsForLayer(++i, layerSize);
     tempLayer = MathUtils.sigmoid(MathUtils.mMult(iW, tempLayer));
+    LAYERS.add(tempLayer);
 
     return tempLayer;
   }
@@ -158,9 +218,9 @@ public class Network extends NeuralLogging {
     double[] errors = new double[10];
     for (int i = 0; i < errors.length; i++) {
       if (i == label) {
-        errors[i] = 1 - output[i];
+        errors[i] = (1 - output[i]) * (1 - output[i]);
       } else {
-        errors[i] = 0 - output[i];
+        errors[i] = (0 - output[i]) * (0 - output[i]);
       }
     }
     return errors;

@@ -21,6 +21,7 @@ public abstract class MnistReaderBase implements MnistReadOnly {
    */
   protected double[] readImage(int index, MnistFile mnistFile) {
 
+
     int start = mnistFile.getStart();
     short size = 28 * 28;
     int offset = index * size + start;
@@ -28,19 +29,22 @@ public abstract class MnistReaderBase implements MnistReadOnly {
     File file = mnistFile.getPath().toFile();
 
     if (file.exists()) {
+
       try (var stream = Files.newInputStream(MnistFile.TRAIN_IMAGE.getPath())) {
 
         var bytes = stream.readAllBytes();
 
         int j = 0;
         for (int i = offset; i < size + offset; i++) {
-          buffer[j++] = (double) (bytes[i] & 0xff) / 254; // convert to unsigned byte and normalize
+          buffer[j++] =
+              (double) (bytes[i] & 0xff) / 254; // convert to unsigned byte and normalize
         }
 
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
+
 
     return buffer;
   }
@@ -59,5 +63,6 @@ public abstract class MnistReaderBase implements MnistReadOnly {
     }
     return label;
   }
+
 
 }

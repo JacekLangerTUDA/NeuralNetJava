@@ -1,7 +1,7 @@
 package neural.network.models;
 
 /**
- * .
+ * Used for saving data to file .
  *
  * <p>Created by: Jack</p>
  * <p>Date: 27.10.2022</p>

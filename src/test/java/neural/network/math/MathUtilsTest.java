@@ -55,4 +55,16 @@ class MathUtilsTest {
     assertArrayEquals(expected, MathUtils.mMult(weights, input));
   }
 
+  /**
+   * Test for {@link MathUtils#trans(double[][])}.
+   **/
+  @Test
+  /*default*/ void testTrans() {
+
+    double[][] orig = { { 1, 2, 5 }, { 3, 4, 1 } };
+    double[][] expected = { { 1, 3 }, { 2, 4 }, { 5, 1 } };
+
+    assertArrayEquals(expected, MathUtils.trans(orig));
+  }
+
 }
