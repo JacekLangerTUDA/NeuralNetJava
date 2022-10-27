@@ -1,0 +1,15 @@
+= Neuronales Netzwerk
+:author: Jacek Langer
+:stem:
+
+== Signum-Funktion
+
+[stem]
+++++
+1/(1+e^-(x))
+++++
+== Fehler-Funktion
+[stem]
+++++
+1/[1+e^(-(sum_j^n(1/(1+e^-(sum_j^k(w_(jk)*e)))))]
+++++
