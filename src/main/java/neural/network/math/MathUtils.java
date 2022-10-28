@@ -3,7 +3,7 @@ package neural.network.math;
 import static java.lang.Math.E;
 import static java.lang.Math.pow;
 
-import kotlin.NotImplementedError;
+import java.util.stream.IntStream;
 import neural.network.math.exception.IllegalMathOperationException;
 
 /**
@@ -48,7 +48,7 @@ public class MathUtils {
 
   /**
    * Multiplies two matrices. returns a new matrix of the size MxN where m is the number of rows in
-   * the first and n the number of columns in the second matrix.
+   * the first and n the number of columns in the second matrix. Parallel execution.
    *
    * @param first  first matrix
    * @param second second matrix
@@ -66,13 +66,14 @@ public class MathUtils {
 
     double[][] temp = new double[first.length][second[0].length];
 
-    for (int i = 0; i < m; i++) {
+    IntStream.range(0, m).parallel().forEach(i -> {
       for (int j = 0; j < n; j++) {
         for (int k = 0; k < second.length; k++) {
           temp[i][j] += first[i][k] * second[k][j];
         }
       }
-    }
+    });
+
     return temp;
   }
 
@@ -91,13 +92,68 @@ public class MathUtils {
     }
 
     double[] temp = new double[weights.length];
-
-    for (int i = 0; i < weights.length; i++) {
+    IntStream.range(0, weights.length).parallel().forEach(i -> {
       for (int k = 0; k < input.length; k++) {
         temp[i] += weights[i][k] * input[k];
       }
+    });
+
+    return temp;
+  }
+
+  /**
+   * Multiplies two matrices of which the first matrix is a Nx1 matrix and the second will be
+   * handled as a 1xM matrix. the result is a matrix with dimensions of Mx1.
+   *
+   * @param fst the weights matrix
+   * @param scd the input matrix
+   * @return new input layer
+   */
+  public static double[][] mMult(final double[] fst, final double[] scd) {
+
+
+    double[][] temp = new double[fst.length][scd.length];
+
+    IntStream.range(0, fst.length).parallel().forEach(i -> {
+      for (int k = 0; k < scd.length; k++) {
+        temp[i][k] += fst[i] * scd[k];
+      }
+    });
+
+    return temp;
+  }
+
+
+  /**
+   * Multiplies two matrices of which the first matrix is a Nx1 matrix and the second will be
+   * handled as a 1xM matrix. the result is a matrix with dimensions of Mx1.
+   *
+   * @param fst the weights matrix
+   * @param scd the input matrix
+   * @return new input layer
+   */
+  public static double[][] mMultWeighted(final double[] fst, final double[] scd, double weight) {
+
+
+    double[][] temp = mMult(fst, scd);
+
+    return mult(weight, temp);
+  }
+
+  public static double[][] mAdd(double[][] fst, double[][] scd) {
+
+    if (fst.length != scd.length || fst[0].length != scd[0].length) {
+      throw new IllegalMathOperationException(
+          "Invalid matrix size. Can not add matrix of different sizes");
     }
 
+    double[][] temp = new double[fst.length][fst[0].length];
+
+    IntStream.range(0, fst.length).parallel().forEach(i -> {
+      for (int j = 0; j < fst[i].length; j++) {
+        temp[i][j] = fst[i][j] + scd[i][j];
+      }
+    });
     return temp;
   }
 
@@ -113,22 +169,6 @@ public class MathUtils {
     return val;
   }
 
-  /**
-   * Multiplies 2 matrices of which the first is of Nx1 and the second Of NxM the result is a new
-   * matrix of NxM.
-   *
-   * @param weights the weights matrix
-   * @param input   the input matrix
-   * @return new input layer
-   */
-  public static double[][] mMult(final double[] input, final double[][] weights) {
-
-//    double[][] temp = new double[weights.length][weights[0].length];
-
-    throw new NotImplementedError();
-
-//    return temp;
-  }
 
   /**
    * Multiplies a vector with a given alpha
@@ -140,9 +180,29 @@ public class MathUtils {
   public static double[] mult(double alpha, double[] arr) {
 
     var temp = new double[arr.length];
+
     for (int i = 0; i < arr.length; i++) {
       temp[i] = arr[i] * alpha;
     }
+    return temp;
+  }
+
+  /**
+   * Multiplies a vector with a given alpha
+   *
+   * @param alpha the alpha to multiply with
+   * @param arr   the array
+   * @return new array with modified values
+   */
+  public static double[][] mult(double alpha, double[][] arr) {
+
+    var temp = new double[arr.length][arr[0].length];
+    IntStream.range(0, arr.length).parallel().forEach(i -> {
+
+      for (int j = 0; j < arr[i].length; j++) {
+        temp[i][j] = arr[i][j] * alpha;
+      }
+    });
     return temp;
   }
 
@@ -156,11 +216,14 @@ public class MathUtils {
 
     double[][] temp = new double[matrix[0].length][matrix.length];
 
-    for (int i = 0; i < matrix.length; i++) {
-      for (int j = 0; j < matrix[i].length; j++) {
-        temp[j][i] = matrix[i][j];
-      }
-    }
+    IntStream.range(0, matrix.length).parallel().forEach(
+        i -> {
+          for (int j = 0; j < matrix[i].length; j++) {
+            temp[j][i] = matrix[i][j];
+          }
+        }
+    );
+
     return temp;
   }
 

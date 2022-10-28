@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 import neural.network.math.MathUtils;
 import neural.network.models.Layer;
 import neural.network.models.NodesList;
 import neural.network.reader.MnistReader;
+import neural.network.utils.ImageCount;
 import neural.network.utils.Validate;
 
 
@@ -25,7 +27,7 @@ public class Network extends NeuralLogging {
 
   public static final int INPUT_NODES = 784;
 
-  public static final double CORRECTION_RATE = .1;
+  public static final double CORRECTION_RATE = .15;
 
   private static final Path WEIGHTS_PATH = Path.of("src/main/resources/weights.json");
   /**
@@ -36,7 +38,7 @@ public class Network extends NeuralLogging {
 
   public static void main(String[] args) {
 
-    train(1);
+    train(1, ImageCount.ALL);
     MnistReader reader = new MnistReader();
     assess(reader.readControlImage(78), reader.readControlLabel(78));
   }
@@ -58,16 +60,17 @@ public class Network extends NeuralLogging {
     info(sb.toString());
   }
 
-  public static void train(int generations) {
+  public static void train(int generations, ImageCount count) {
 
     double[] pixelArray = null;
     short label = 0;
     MnistReader reader = new MnistReader();
     fetchWeightsFromJson();
+    int images = count.getCount();
 
     for (int g = 0; g < generations; g++) {
 
-      for (int n = 0; n < 100; n++) {
+      for (int n = 0; n < images; n++) {
         var rand = (int) (Math.random() * 100);
         pixelArray = reader.readTrainImage(rand);
         label = reader.readTrainLabel(rand);
@@ -92,24 +95,29 @@ public class Network extends NeuralLogging {
    */
   private static double[] backpropagation(double[] errors, int i) {
 
-// TODO: 27.10.2022 needs fixing
-    final double[][] weights = (WEIGHTS.get(i));
-    final double[] layer = LAYERS.get(i);
-    double[] errorTemp = new double[layer.length];
-    for (int k = 0; k < errors.length; k++) {
-      int length = weights[k].length;
-      for (int j = 0; j < length; j++) {
+    // fehler für nächste schicht berechnen
+    double[][] weights = WEIGHTS.get(i);
+    double[] outHidden = LAYERS.get(i);
+    double[] err = new double[outHidden.length];   // errors for each node in the hidden layer
 
-        double oj = layer[j];
-        double sig = MathUtils.sigmoid(MathUtils.scalar(weights[k], layer));
-        double err = -1 * errors[k] * sig * (1 - sig) * oj;
-
-        errorTemp[j] = err;
-
-        WEIGHTS.get(i)[k][j] += err; //* CORRECTION_RATE;
+//    Arrays.stream(errors).parallel().forEach(e -> {
+    IntStream.range(0, errors.length).parallel().forEach(k -> {
+      double e = errors[k];
+      for (int j = 0; j < err.length; j++) {
+        final double outk = outHidden[j];
+        double sig = MathUtils.sigmoid(MathUtils.scalar(outHidden, weights[k]) * outk);
+        double ew = -1 * e * sig * (1 - sig) * outk;
+        err[j] += ew;
       }
-    }
-    return errorTemp;
+    });
+
+    // gewichtungs matrix berechnen
+
+    double[][] deltas = MathUtils.mMultWeighted(errors, outHidden, CORRECTION_RATE);
+    WEIGHTS.set(i, MathUtils.mAdd(WEIGHTS.get(i), deltas));
+
+    return err;
+
   }
 
   private static double[] processLayers(double[] nodes) {
@@ -218,9 +226,9 @@ public class Network extends NeuralLogging {
     double[] errors = new double[10];
     for (int i = 0; i < errors.length; i++) {
       if (i == label) {
-        errors[i] = (1 - output[i]) * (1 - output[i]);
+        errors[i] = (1 - output[i]);
       } else {
-        errors[i] = (0 - output[i]) * (0 - output[i]);
+        errors[i] = (0 - output[i]);
       }
     }
     return errors;
