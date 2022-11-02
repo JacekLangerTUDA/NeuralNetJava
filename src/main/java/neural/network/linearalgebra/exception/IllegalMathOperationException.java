@@ -1,4 +1,4 @@
-package neural.network.math.exception;
+package neural.network.linearalgebra.exception;
 
 /**
  * .
