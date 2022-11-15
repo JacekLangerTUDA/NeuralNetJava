@@ -130,12 +130,11 @@ public class NeuralNet {
     double p = ((prog + 1) / (double) total) * 100f;
     String bars = "=".repeat((int) ((prog + 1) * 20 / total)) + ">";
 
-    int hours = (int) (dur / 60000 * 60);
     int min = (int) (dur / 60000);
-    double sec = dur / 1000f;
+    double sec = dur / 1000f - (min * 60 );
 
-    System.out.printf("%5.2f [%-21s] %s/%s,\t\t\tduration: %2s:%2s:%5.2f %7.2f\r", p, bars, prog + 1, total,
-                      hours, min, sec,hitrate());
+    System.out.printf("%05.2f [%-21s] %s/%s,\t\t\tduration: %02d:%05.2f\taccuracy: %07.2f\r", p, bars, prog + 1, total,
+                       min, sec,hitrate());
   }
 
   /**
