@@ -3,7 +3,6 @@ package neural.network;
 import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,25 +29,29 @@ public class Main {
   public static final String CONTROL_LABEL_PATH = "resources/data/t10k-labels.idx1-ubyte";
 
   public static void main(String[] args) {
+
     boolean cleanRun = false;
+    double incrementLearning = 0.0;
     short gen = 1;
     double lr = 0.03;
     for (int i = 0; i < args.length; i++) {
       var s = args[i];
-      switch (s){
-        case "-c"-> cleanRun = true;
-        case "-g" -> gen = Short.parseShort(args[i+1]);
+      switch (s) {
+        case "-c" -> cleanRun = true;
+        case "-g" -> gen = Short.parseShort(args[i + 1]);
         case "-h" -> help();
-        case "--lr" -> lr = (double)(Double.parseDouble(args[i+1])/100.);
+        case "-l", "--learning-rate" -> lr = (double) (Double.parseDouble(args[i + 1]) / 100.);
+        case "-i", "--increase-learning-rate" -> incrementLearning = (double) (Double.parseDouble(
+            args[i + 1]) / 100.);
       }
     }
 
-    var weights = fetchWeigths(2,cleanRun );
+    var weights = fetchWeigths(2, cleanRun);
     double[][] fst = weights.get(0);
     double[][] sec = weights.get(1);
     double[][] thrd = weights.get(2);
     var net = new neural.network.NeuralNet(fst, sec, thrd);
-    net.train(gen, lr);
+    net.train(gen, lr, incrementLearning);
     assessRandom();
 
     // save the weights to file.
@@ -61,14 +64,17 @@ public class Main {
   private static void help() {
 
     String help = """
-    -h          opens the help
-    -c          clean run, ignores existing weights and creates new weights matrix.
-    -g <int>    the generations to run for.
-    --lr <double>  the learning rate in percent.
-    
-    use:
-        java -jar neuronalesJavaNetz.jar -g 5 -c --lr 3
-    """;
+                  Neural Network to asses handwritten numbers.
+                                    
+                    -h          opens the help
+                    -c          clean run, ignores existing weights and creates new weights matrix.
+                    -g <int>    the generations to run for.
+                    -l | --learning-rate <double>  the learning rate in percent.
+                    -i | --increase-learning-rate <double>  the increment for the learning rate in percent. Learning rate will be incremented after each generation, defaults to 0. 
+                      
+                  How to use:
+                      java -jar neuronalesJavaNetz.jar -g 5 -c --lr 3 -i 7.5 
+                  """;
 
     System.out.println(help);
     System.exit(0);
@@ -76,7 +82,7 @@ public class Main {
 
   public static void assessRandom() {
 
-    var weights = fetchWeigths(2,false);
+    var weights = fetchWeigths(2, false);
     double[][] fst = weights.get(0);
     double[][] sec = weights.get(1);
     double[][] thrd = weights.get(2);
@@ -94,7 +100,7 @@ public class Main {
 
   public static void assess(double[] inp) {
 
-    var weights = fetchWeigths(2,false);
+    var weights = fetchWeigths(2, false);
     double[][] fst = weights.get(0);
     double[][] sec = weights.get(1);
     double[][] thrd = weights.get(2);
@@ -170,7 +176,7 @@ public class Main {
    * @param hiddenLayers amount of hidden layers.
    * @return a list of weigths
    */
-  private static List<double[][]> fetchWeigths(int hiddenLayers,boolean clean) {
+  private static List<double[][]> fetchWeigths(int hiddenLayers, boolean clean) {
 
     var gson = new Gson();
     int prevSize = 784;

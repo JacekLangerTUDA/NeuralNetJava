@@ -61,7 +61,13 @@ public class NeuralNet {
     Collections.addAll(WEIGHTS, fstWeights, scndWeights, fnlLayerWeights);
   }
 
-  public void train(int generations, double lr) {
+  /**
+   * Runs the training session of the network.
+   * @param generations number of generations to run
+   * @param lr the learningrate to begin with
+   * @param ilr the increment of the learningrate with each generation
+   */
+  public void train(int generations, double lr,double ilr) {
 
   hits = new ArrayList();
     short tOffset = 16;
@@ -105,6 +111,7 @@ public class NeuralNet {
 
           hits.add(processAndCorrect(lr, img, lable));
         }
+        lr+=ilr;
       }
 
     } catch (IOException e) {
