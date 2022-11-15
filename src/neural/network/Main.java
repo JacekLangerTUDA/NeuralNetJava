@@ -55,9 +55,8 @@ public class Main {
           case "-g" -> gen = Short.parseShort(args[i + 1]);
           case "-h" -> help(0);
           case "-l", "--learning-rate" -> lr = (double) (Double.parseDouble(args[i + 1]) / 100.);
-          case "-i", "--increase-learning-rate" -> incrementLearning = (double) (Double.parseDouble(
-              args[i + 1]) / 100.);
-//          case "--hidden" -> hidden = Integer.parseInt(args[i] + 1);    //todo:implement
+          case "-i", "--increase-learning-rate" ->
+              incrementLearning = (1 - lr) * 100 / (gen * 60_000);
         }
       }
 
@@ -88,7 +87,7 @@ public class Main {
                     -c                                      clean run, ignores existing weights and creates new weights matrix.
                     -g <int>                                the generations to run for.
                     -l | --learning-rate <double>           the learning rate in percent.
-                    -i | --increase-learning-rate <double>  the increment for the learning rate in percent. Learning rate will be incremented after each generation, defaults to 0. 
+                    -i | --increase-learning-rate           Increases the learning rate with each element until a learning rate of 100 % is reached. 
                     --hidden                                the hidden layers generated, should be used with option [-c]
                   How to use:
                       java -jar neuronalesJavaNetz.jar -g 5 -c --lr 3 -i 7.5 

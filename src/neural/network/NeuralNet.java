@@ -111,8 +111,8 @@ public class NeuralNet {
           short lable = lBuff.array()[r];
 
           hits.add(processAndCorrect(lr, img, lable));
+          lr += ilr;
         }
-        lr += ilr;
       }
 
 
