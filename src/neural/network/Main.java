@@ -30,54 +30,72 @@ public class Main {
 
   public static void main(String[] args) {
 
-    boolean cleanRun = false;
-    double incrementLearning = 0.0;
-    short gen = 1;
-    double lr = 0.03;
-    for (int i = 0; i < args.length; i++) {
-      var s = args[i];
-      switch (s) {
-        case "-c" -> cleanRun = true;
-        case "-g" -> gen = Short.parseShort(args[i + 1]);
-        case "-h" -> help();
-        case "-l", "--learning-rate" -> lr = (double) (Double.parseDouble(args[i + 1]) / 100.);
-        case "-i", "--increase-learning-rate" -> incrementLearning = (double) (Double.parseDouble(
-            args[i + 1]) / 100.);
+    System.out.printf("""
+                                            
+                      \t\t\tNN    NN  NN    NN  jjjjjj
+                      \t\t\tNNNN  NN  NNNN  NN      jj
+                      \t\t\tNN  NNNN  NN  NNNN  jj  jj
+                      \t\t\tNN    NN  NN    NN   jjj
+                                            
+                      \t\t\tNeuronales Netz in Java V1
+                                            
+                      """);
+
+    try {
+
+      boolean cleanRun = false;
+      double incrementLearning = 0.0;
+      int hidden = 2;
+      short gen = 1;
+      double lr = 0.03;
+      for (int i = 0; i < args.length; i++) {
+        var s = args[i];
+        switch (s) {
+          case "-c" -> cleanRun = true;
+          case "-g" -> gen = Short.parseShort(args[i + 1]);
+          case "-h" -> help(0);
+          case "-l", "--learning-rate" -> lr = (double) (Double.parseDouble(args[i + 1]) / 100.);
+          case "-i", "--increase-learning-rate" -> incrementLearning = (double) (Double.parseDouble(
+              args[i + 1]) / 100.);
+//          case "--hidden" -> hidden = Integer.parseInt(args[i] + 1);    //todo:implement
+        }
       }
+
+      var weights = fetchWeigths(2, cleanRun);
+      double[][] fst = weights.get(0);
+      double[][] sec = weights.get(1);
+      double[][] thrd = weights.get(2);
+      var net = new neural.network.NeuralNet(fst, sec, thrd);
+      net.train(gen, lr, incrementLearning);
+      assessRandom();
+
+      // save the weights to file.
+      saveWeights(net.getFstHiddenLayerWeigths(),
+                  net.getSecondHiddenLayerWeigths(),
+                  net.getFinalHiddenLayerWeigths());
+    } catch (Exception e) {
+      help(1);
     }
-
-    var weights = fetchWeigths(2, cleanRun);
-    double[][] fst = weights.get(0);
-    double[][] sec = weights.get(1);
-    double[][] thrd = weights.get(2);
-    var net = new neural.network.NeuralNet(fst, sec, thrd);
-    net.train(gen, lr, incrementLearning);
-    assessRandom();
-
-    // save the weights to file.
-    saveWeights(net.getFstHiddenLayerWeigths(),
-                net.getSecondHiddenLayerWeigths(),
-                net.getFinalHiddenLayerWeigths());
 
   }
 
-  private static void help() {
+  private static void help(int exitcode) {
 
     String help = """
                   Neural Network to asses handwritten numbers.
                                     
-                    -h          opens the help
-                    -c          clean run, ignores existing weights and creates new weights matrix.
-                    -g <int>    the generations to run for.
-                    -l | --learning-rate <double>  the learning rate in percent.
+                    -h                                      opens the help
+                    -c                                      clean run, ignores existing weights and creates new weights matrix.
+                    -g <int>                                the generations to run for.
+                    -l | --learning-rate <double>           the learning rate in percent.
                     -i | --increase-learning-rate <double>  the increment for the learning rate in percent. Learning rate will be incremented after each generation, defaults to 0. 
-                      
+                    --hidden                                the hidden layers generated, should be used with option [-c]
                   How to use:
                       java -jar neuronalesJavaNetz.jar -g 5 -c --lr 3 -i 7.5 
                   """;
 
     System.out.println(help);
-    System.exit(0);
+    System.exit(exitcode);
   }
 
   public static void assessRandom() {

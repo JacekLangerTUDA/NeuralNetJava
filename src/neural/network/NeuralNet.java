@@ -3,7 +3,6 @@ package neural.network;
 import static java.lang.Math.E;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,8 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicInteger;
 import neural.network.linearalgebra.Matrix;
 
 /**
@@ -63,13 +61,15 @@ public class NeuralNet {
 
   /**
    * Runs the training session of the network.
+   *
    * @param generations number of generations to run
-   * @param lr the learningrate to begin with
-   * @param ilr the increment of the learningrate with each generation
+   * @param lr          the learningrate to begin with
+   * @param ilr         the increment of the learningrate with each generation
    */
-  public void train(int generations, double lr,double ilr) {
+  public void train(int generations, double lr, double ilr) {
 
-  hits = new ArrayList();
+    System.out.println("\t\t\tTRAINING");
+    hits = new ArrayList();
     short tOffset = 16;
     short lOffset = 8;
     short imageSize = 28 * 28;
@@ -97,12 +97,13 @@ public class NeuralNet {
       long start = System.currentTimeMillis();
       long total = (long) MAX_IMAGE_COUNT * generations;
 
+      AtomicInteger counter = new AtomicInteger();
 
       for (int i = 0; i < generations; i++) {
 
         for (int j = 0; j < MAX_IMAGE_COUNT; j++) {
           long current = System.currentTimeMillis();
-          progressBar((i + 1) * j, total, current - start);
+          progressBar(counter.getAndIncrement(), total, current - start);
           // get a random image
           int r = rand.nextInt(0, MAX_IMAGE_COUNT);
           double[] img = Arrays.copyOfRange(trainDouble, r * imageSize,
@@ -111,8 +112,9 @@ public class NeuralNet {
 
           hits.add(processAndCorrect(lr, img, lable));
         }
-        lr+=ilr;
+        lr += ilr;
       }
+
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -122,14 +124,18 @@ public class NeuralNet {
 
   }
 
-  private double hitrate(){
+  private double hitrate() {
+
     double hitcount = 0f;
-    if (hits.size() == 0) return 0;
-    for (Boolean hit : hits) {
-      if (hit)
-        hitcount++;
+    if (hits.size() == 0) {
+      return 0;
     }
-    return (hitcount /(double)hits.size())*100f;
+    for (Boolean hit : hits) {
+      if (hit) {
+        hitcount++;
+      }
+    }
+    return (hitcount / (double) hits.size()) * 100f;
   }
 
   private void progressBar(int prog, long total, long dur) {
@@ -138,10 +144,12 @@ public class NeuralNet {
     String bars = "=".repeat((int) ((prog + 1) * 20 / total)) + ">";
 
     int min = (int) (dur / 60000);
-    double sec = dur / 1000f - (min * 60 );
-
-    System.out.printf("%05.2f [%-21s] %s/%s,\t\t\tduration: %02d:%05.2f\t\t\taccuracy: %07.2f\r", p, bars, prog + 1, total,
-                       min, sec,hitrate());
+    double sec = dur / 1000f - (min * 60);
+    System.out.printf("%05.2f [%-21s] %9s/%s dur: %02d:%05.2f acc: %7.2f \r",
+                      p,
+                      bars, prog + 1, total,
+                      min, sec, hitrate());
+    System.out.flush();
   }
 
   /**
@@ -237,7 +245,7 @@ public class NeuralNet {
                                                      input,
                                                      learingrate));
 
-    return isHit(lbl,out);
+    return isHit(lbl, out);
   }
 
   private boolean isHit(short lbl, double[] out) {
@@ -245,7 +253,7 @@ public class NeuralNet {
     int index = -1;
     double max = Arrays.stream(out).max().getAsDouble();
     for (int i = 0; i < out.length; i++) {
-      if (out[i] == max){
+      if (out[i] == max) {
         index = i;
         break;
       }
