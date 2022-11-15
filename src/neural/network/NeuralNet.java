@@ -133,7 +133,7 @@ public class NeuralNet {
     int min = (int) (dur / 60000);
     double sec = dur / 1000f - (min * 60 );
 
-    System.out.printf("%05.2f [%-21s] %s/%s,\t\t\tduration: %02d:%05.2f\taccuracy: %07.2f\r", p, bars, prog + 1, total,
+    System.out.printf("%05.2f [%-21s] %s/%s,\t\t\tduration: %02d:%05.2f\t\t\taccuracy: %07.2f\r", p, bars, prog + 1, total,
                        min, sec,hitrate());
   }
 
