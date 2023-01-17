@@ -66,7 +66,7 @@ public class NeuralNet {
    * @param lr          the learningrate to begin with
    * @param ilr         the increment of the learningrate with each generation
    */
-  public void train(int generations, double lr, double ilr) {
+  public void train(int generations, double lr) {
 
     System.out.println("\t\t\tTRAINING");
     hits = new ArrayList();
@@ -100,6 +100,10 @@ public class NeuralNet {
       AtomicInteger counter = new AtomicInteger();
 
       for (int i = 0; i < generations; i++) {
+        if (hitrate() > 90) {
+          lr = 1;   // set lr to 1 if hitrate is above 90, diffs will be very small
+        }
+
 
         for (int j = 0; j < MAX_IMAGE_COUNT; j++) {
           long current = System.currentTimeMillis();
@@ -111,7 +115,6 @@ public class NeuralNet {
           short lable = lBuff.array()[r];
 
           hits.add(processAndCorrect(lr, img, lable));
-          lr += ilr;
         }
       }
 

@@ -44,8 +44,6 @@ public class Main {
     try {
 
       boolean cleanRun = false;
-      double incrementLearning = 0.0;
-      int hidden = 2;
       short gen = 1;
       double lr = 0.03;
       for (int i = 0; i < args.length; i++) {
@@ -55,8 +53,6 @@ public class Main {
           case "-g" -> gen = Short.parseShort(args[i + 1]);
           case "-h" -> help(0);
           case "-l", "--learning-rate" -> lr = (double) (Double.parseDouble(args[i + 1]) / 100.);
-          case "-i", "--increase-learning-rate" ->
-              incrementLearning = (1 - lr) * 100 / (gen * 60_000);
         }
       }
 
@@ -65,7 +61,7 @@ public class Main {
       double[][] sec = weights.get(1);
       double[][] thrd = weights.get(2);
       var net = new neural.network.NeuralNet(fst, sec, thrd);
-      net.train(gen, lr, incrementLearning);
+      net.train(gen, lr);
       assessRandom();
 
       // save the weights to file.
@@ -226,7 +222,7 @@ public class Main {
 
     for (int i = 0; i < arr.length; i++) {
       for (int j = 0; j < arr[i].length; j++) {
-        arr[i][j] = Math.random() * .1;
+        arr[i][j] = Math.random() * .1 + 0.001;
       }
     }
     return arr;
