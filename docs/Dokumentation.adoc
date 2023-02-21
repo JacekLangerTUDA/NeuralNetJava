@@ -1,0 +1,8 @@
+= Dokumentation des Neuronalen netzes zur Erkennung Handgeschriebener Zahlen
+:author: Jacek Langer
+:email: Jacek.Langer@Tu-Darmstadt.de
+:stem:
+:toc:
+
+include::Datenverarbeitung.adoc[]
+include::Netzwerk.adoc[]

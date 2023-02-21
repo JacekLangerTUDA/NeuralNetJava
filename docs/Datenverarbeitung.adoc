@@ -1,0 +1,5 @@
+== Datenverarbeitung nach EVA Prinzip
+
+=== Laden von Inputs
+
+=== Speichern von Gewichten

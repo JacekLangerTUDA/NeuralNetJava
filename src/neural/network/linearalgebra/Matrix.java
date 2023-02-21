@@ -23,18 +23,7 @@ public class Matrix {
    */
   public static double[] mult(final double[] input, final double[][] weights) {
 
-    if (weights[0].length != input.length) {
-      throw new IllegalMathOperationException("Invalid matrix operation");
-    }
-
-    double[] temp = new double[weights.length];
-    IntStream.range(0, weights.length).parallel().forEach(i -> {
-      for (int k = 0; k < input.length; k++) {
-        temp[i] += weights[i][k] * input[k];
-      }
-    });
-
-    return temp;
+    return isValid(weights, input);
   }
 
   /**
@@ -46,6 +35,11 @@ public class Matrix {
    * @return new input layer
    */
   public static double[] mult(final double[][] matrix, final double[] vector) {
+
+    return isValid(matrix, vector);
+  }
+
+  private static double[] isValid(double[][] matrix, double[] vector) {
 
     if (matrix[0].length != vector.length) {
       throw new IllegalMathOperationException("Invalid matrix operation");

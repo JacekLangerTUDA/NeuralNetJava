@@ -1,0 +1,5 @@
+== Neuronales Netz
+
+=== Aktivierungsfunktion
+
+=== Fehler Rückführung

@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import neural.network.linearalgebra.Matrix;
 
 /**
@@ -30,6 +31,7 @@ public class NeuralNet {
   private double[] fstHLayer;
   private double[] scndHlayer;
   private List<Boolean> hits;
+  private static final Object PADLOCK = new Object();
 
   public double[][] getFstHiddenLayerWeigths() {
 
@@ -64,7 +66,6 @@ public class NeuralNet {
    *
    * @param generations number of generations to run
    * @param lr          the learningrate to begin with
-   * @param ilr         the increment of the learningrate with each generation
    */
   public void train(int generations, double lr) {
 
@@ -100,14 +101,12 @@ public class NeuralNet {
       AtomicInteger counter = new AtomicInteger();
 
       for (int i = 0; i < generations; i++) {
-        if (hitrate() > 90) {
-          lr = 1;   // set lr to 1 if hitrate is above 90, diffs will be very small
-        }
 
+        IntStream.range(0, MAX_IMAGE_COUNT).forEach(j -> {
 
-        for (int j = 0; j < MAX_IMAGE_COUNT; j++) {
           long current = System.currentTimeMillis();
           progressBar(counter.getAndIncrement(), total, current - start);
+
           // get a random image
           int r = rand.nextInt(0, MAX_IMAGE_COUNT);
           double[] img = Arrays.copyOfRange(trainDouble, r * imageSize,
@@ -115,7 +114,7 @@ public class NeuralNet {
           short lable = lBuff.array()[r];
 
           hits.add(processAndCorrect(lr, img, lable));
-        }
+        });
       }
 
 
@@ -165,8 +164,8 @@ public class NeuralNet {
 
     double[] temp = new double[arr.length];
     for (int i = 0; i < arr.length; i++) {
-      double x = -1 * arr[i];
-      temp[i] = (1 / (1 + Math.pow(E, x)));
+
+      temp[i] = (1 / (1 + 1 / Math.pow(E, arr[i])));
     }
     return temp;
   }
@@ -230,23 +229,26 @@ public class NeuralNet {
        this value will be subtracted from the current weigths after
        */
 
-    finalHiddenLayerWeigths = Matrix.add(finalHiddenLayerWeigths,
-                                         correctErrors(err,
-                                                       out,
-                                                       scndHlayer,
+    synchronized (PADLOCK) {  // lock thread to enable Parallelization
+      // Todo: Parallelize
+      finalHiddenLayerWeigths = Matrix.add(finalHiddenLayerWeigths,
+                                           correctErrors(err,
+                                                         out,
+                                                         scndHlayer,
+                                                         learingrate));
+      // second layer
+      secondHiddenLayerWeigths = Matrix.add(secondHiddenLayerWeigths,
+                                            correctErrors(errSndHid,
+                                                          scndHlayer,
+                                                          fstHLayer,
+                                                          learingrate));
+      // first layer
+      fstHiddenLayerWeigths = Matrix.add(fstHiddenLayerWeigths,
+                                         correctErrors(errFstHid,
+                                                       fstHLayer,
+                                                       input,
                                                        learingrate));
-    // second layer
-    secondHiddenLayerWeigths = Matrix.add(secondHiddenLayerWeigths,
-                                          correctErrors(errSndHid,
-                                                        scndHlayer,
-                                                        fstHLayer,
-                                                        learingrate));
-    // first layer
-    fstHiddenLayerWeigths = Matrix.add(fstHiddenLayerWeigths,
-                                       correctErrors(errFstHid,
-                                                     fstHLayer,
-                                                     input,
-                                                     learingrate));
+    }
 
     return isHit(lbl, out);
   }
